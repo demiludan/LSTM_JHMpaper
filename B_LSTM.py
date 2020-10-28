@@ -22,7 +22,7 @@ import time
 #----------------------------------------------------------
 #---- multivariate LSTM forecasting  ----
 #----------------------------------------------------------
-# predicting NEE for furture n_out time steps given meteorogical data at previous n_in time step.
+# predicting streamflow discharge for furture n_out time steps given meteorogical data at previous n_in time step.
 # --- convert series to supervised learning
 def series_to_supervised(data_in, data_out, n_in=1, n_out=1, dropnan=True):
 	n_vars_in = 1 if type(data_in) is list else data_in.shape[1]
@@ -83,7 +83,7 @@ yobs_test = XYdata[-Ntest:, -nfuture]
 print('shape of yobs_train and yobs_test is ', yobs_train.shape, yobs_test.shape)
 print('min and max of yobs_test', np.min(yobs_test), np.max(yobs_test))
 
-# 1.3 ---scale training data both X and y
+# 1.3 ---scale training and testing data
 scaler = MinMaxScaler(feature_range=(0, 1))
 scaledXYtrain = scaler.fit_transform(XYtrain)
 scaledXYtest = scaler.transform(XYtest)
@@ -94,13 +94,11 @@ train_X, train_y = scaledXYtrain[:, :nobs], scaledXYtrain[:, -nfuture]
 test_X = scaledXYtest[:, :nobs]
 print('shape of train_X, train_y, and test_X: ', train_X.shape, train_y.shape, test_X.shape)
 
-
 # reshape input to be 3D [samples, timesteps, features]
 train_X = train_X.reshape((train_X.shape[0], ndays, ninputs))
 test_X = test_X.reshape((test_X.shape[0], ndays, ninputs))
 print('shape of train_X and test_X in 3D: ', train_X.shape, test_X.shape)
 
-# exit()
 
 #----------------------------------------------------------
 #---- Train LSTM model  ----
@@ -124,7 +122,7 @@ x = LSTM(20, recurrent_dropout = dropout)(inp,training=True)
 out = Dense(nfuture)(x)
 model = Model(inputs=inp, output=out)
 
-adam = optimizers.adam(lr=0.001)  #default lr=0.001
+adam = optimizers.adam(lr=0.001)  
 model.compile(loss='mse', optimizer=adam)
 
 start = time.time()
@@ -174,7 +172,6 @@ for i in range(Nepoch):
 
 end = time.time()
 print('Epoch takes time: %f', end-start)
-
 
 
 # #----- Save results
